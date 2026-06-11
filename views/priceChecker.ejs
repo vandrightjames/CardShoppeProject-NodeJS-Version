@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<%- include('html_head.ejs') %>
+
+<body>
+
+<%- include('head.ejs') %>
+
+<form id="add_to_watchlist">
+
+    <input id="game_choice" type="text" list="games" placeholder="Game (Id)" />
+    <datalist id="games">
+        <% for(let i = 0; i < games.length;i++){%>
+            <option value="<%=games[i].id%>"><%=games[i].name%> (<%=games[i].id%>)</option>
+        <% } %>
+    </datalist>
+
+    <input id="set_choice" type="text" list="sets" placeholder="Set (Id)" />
+    <datalist id="sets">
+        
+    </datalist>
+
+
+    <button type="button" id="submit_btn">Add to Watchlist</button>  
+
+</form>
+<%- include('foot.ejs') %>
+
+<script>
+
+   game_c = document.getElementById("game_choice");
+   game_c.addEventListener("change", function(event){
+
+   });
+
+</script>
+
+</body>
+</html>

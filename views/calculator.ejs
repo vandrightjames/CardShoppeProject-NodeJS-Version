@@ -1,0 +1,288 @@
+<!doctype HTML>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Calculator</title>
+        <style>
+            table{
+                border-collapse: collapse;
+            }
+            table,tr,td{
+                border: 1px solid black;
+            }
+            .blank_row{
+                height: 1vh;
+                background-color: black;
+            }
+
+            .total_color{
+                background-color: lightgrey;
+            }
+
+            tr.inputdata:nth-child(even){
+                background-color: lightblue;
+            }
+
+            input{
+                width:80px;
+            }
+        </style>
+
+            
+        <script>
+            //ranges and percents can be freely changed to suite your needs.
+            //these two (ranges and percents) should be the same length of elements.
+            let ranges = [[0,4.99],[5.00,14.99],[15.00,34.99],[35.00,49.99],[50.00,99.99],[100.00,1000000]];
+            //percentages in the order of credit, cash
+            let percents = [[45,35],[55,45],[65,55],[70,65],[75,70],[80,75]];
+        </script>
+
+    </head>
+    <body>
+        <%- include('head.ejs') %>
+        <label for="card_price">Card Price</label>
+        <input type="text" inputmode="decimal" id="card_price"/>
+        <button id="submit_price" type="button">Submit</button>
+
+        <hr>
+
+        <table id="price_table">
+            <thead>
+                <tr>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr id="range_row">
+                    <td>Range</td>
+                </tr>
+
+                <tr class="blank_row"></tr>
+
+                <tr id="indv_unmodified_row">
+                    <td>Per Category Raw</td>
+                </tr>
+                <tr>
+                    <td>Raw Total</td>
+                    <td class="total_color" id="total_unmodified">0</td>
+                </tr>
+
+                <tr class="blank_row"></tr>
+
+                <tr id="perc_credit_row">
+                    <td>Percentage Credit</td>
+                </tr>
+                <tr id="indv_credit_row">
+                    <td>Per Category Credit</td>
+                </tr>
+                <tr >
+                    <td>Total Credit</td>
+                    <td class="total_color" id="total_credit">0</td>
+                </tr>
+
+                <tr class="blank_row"></tr>
+
+                <tr id="perc_cash_row">
+                    <td>Percentage Cash</td>
+                </tr>
+                <tr id="indv_cash_row">
+                    <td>Per Category Cash</td>
+                </tr>
+                <tr>
+                    <td>Total Cash</td>
+                    <td class="total_color" id="total_cash">0</td>
+                </tr>
+                
+                
+            </tbody>
+        </table>
+
+        <script>
+
+            let getPriceBtn = document.getElementById("submit_price");
+            let priceInputField = document.getElementById("card_price");
+            
+            let table = document.getElementById("price_table");
+            let range_row = document.getElementById("range_row");
+            
+            let perc_credit_row = document.getElementById("perc_credit_row");
+            let perc_cash_row = document.getElementById("perc_cash_row");
+
+            let indv_unmodified_row = document.getElementById("indv_unmodified_row");
+            let indv_credit_row = document.getElementById("indv_credit_row");
+            let indv_cash_row = document.getElementById("indv_cash_row");
+            
+
+            let card_prices = [];
+            let global_row_count = 0;
+
+            document.getElementById("total_credit").colSpan = ranges.length;
+            document.getElementById("total_cash").colSpan = ranges.length;
+            document.getElementById("total_unmodified").colSpan = ranges.length;
+
+            function populate_select_field(grc){
+                //this function will make the drop downs for each number, assigning it the unique id of grc
+                let html_string = `<select id='row_price_change_${grc}'>`;
+                
+                for(r=0; r<ranges.length;r++){
+                    html_string += `<option value=${r+1}>${ranges[r][0]}-${ranges[r][1]}</option>`;
+                }
+
+                html_string += "</select>";
+                return html_string;
+            }
+
+            function update_table(){
+                console.log('wtf')
+                let tmpPrice = Number(priceInputField.value);
+                priceInputField.value = "";
+
+                if(typeof tmpPrice === "number" && tmpPrice > 0 && tmpPrice < ranges[ranges.length-1][1]){
+
+                    let new_row = table.insertRow(global_row_count+2);
+                    new_row.id = `row_price_${global_row_count}`;
+                    new_row.insertCell().innerHTML = populate_select_field(global_row_count);//this cell, add a drop down for range change.
+                    
+
+                    new_row.classList.add("inputdata")
+                    
+                    let table_text = "";
+                    for(x=0;x<ranges.length;x++){
+                    
+                        if(tmpPrice >= ranges[x][0] && tmpPrice <= ranges[x][1]){
+                            new_cell = new_row.insertCell();
+                            new_row.dataset.priceIndex = card_prices[x].length;
+                            new_row.dataset.category = x;
+                            new_cell.innerText = tmpPrice;
+
+                            card_prices[x].push(tmpPrice);
+
+
+                            let select_elm = document.getElementById(`row_price_change_${global_row_count}`);
+                            
+                            //some painful off by one, thanks to the select range being in td 0, and the actual data arrays not including that slot.
+                            //so the UI values are x+1, but when back-referencing that value on the card prices, you need to -1.
+                            select_elm.dataset.range_ind = x+1;
+                            select_elm.dataset.index = card_prices[x].length - 1;
+                            select_elm.value = x+1;
+                            select_elm.addEventListener('change',ev=>{
+                                
+                                let select = ev.target;
+                                let old_index = Number(select.dataset.range_ind);
+                                let old_inner_index = Number(select.dataset.index);
+                                let new_index = Number(select.value);
+
+                                select.parentNode.parentNode.children[old_index].innerText = "";
+                                select.parentNode.parentNode.children[new_index].innerText = card_prices[old_index-1][old_inner_index];
+
+                                console.log("FUCK",old_index, old_inner_index)
+                                card_prices[new_index-1].push(card_prices[old_index-1][old_inner_index]);
+                                card_prices[old_index-1].splice(old_inner_index, 1);
+
+                                select.dataset.range_ind = new_index;
+                                select.dataset.index = card_prices[new_index-1].length - 1;
+                                
+                                calc_prices();
+
+                            });
+
+                        }
+                        else{
+                            new_row.insertCell();
+                        }
+                    }
+                    new_row.insertCell().innerHTML = `<button id="delete_${new_row.id}" type='button'>X</button>`;
+                    document.getElementById(`delete_${new_row.id}`).addEventListener('click',ev=>{
+                        r = ev.target.parentNode.parentNode;
+
+                        card_prices[r.dataset.category][r.dataset.priceIndex] = 0;
+
+                        document.getElementById("price_table").deleteRow(ev.target.parentNode.parentNode.rowIndex);
+                        calc_prices();
+                        global_row_count--;
+                    });
+                    global_row_count++;
+
+                    update_table();
+                    calc_prices();
+                }
+            }
+
+            function calc_prices(){
+                //Reset the pricing calcs without having to store id info for each td
+                indv_unmodified_row.innerHTML = "<td>Per Category Raw</td>";
+                indv_credit_row.innerHTML = "<td>Per Category Credit</td>";
+                indv_cash_row.innerHTML = "<td>Per Category Cash</td>";
+
+                new_unmod_total = 0;
+                new_credit_total = 0;
+                new_cash_total = 0;
+
+                for(x=0;x<card_prices.length;x++){//each range gets a step
+                    range_total = 0;
+                    for(y=0;y<card_prices[x].length;y++){//then each price inside each range.
+                        range_total += card_prices[x][y];
+                        //console.log(range_total);
+                    }
+                    i_unmod_nc = indv_unmodified_row.insertCell();
+                    i_cred_nc = indv_credit_row.insertCell();
+                    i_cash_nc = indv_cash_row.insertCell();
+
+                    i_unmod_total = range_total;
+                    i_cred_range_total = (range_total * (percents[x][0] / 100)).toFixed(2);
+                    i_cash_range_total = (range_total * (percents[x][1] / 100)).toFixed(2);
+
+                    i_unmod_nc.innerText = i_unmod_total;
+                    i_cred_nc.innerText = i_cred_range_total;
+                    i_cash_nc.innerText = i_cash_range_total;
+
+                    new_unmod_total += Number(i_unmod_total);
+                    new_credit_total += Number(i_cred_range_total);
+                    new_cash_total += Number(i_cash_range_total);
+
+                }
+
+                document.getElementById("total_unmodified").innerText = "$" + new_unmod_total.toFixed(2);
+                document.getElementById("total_credit").innerText = "$" + new_credit_total.toFixed(2);
+                document.getElementById("total_cash").innerText = "$" + new_cash_total.toFixed(2);
+
+            };
+
+            //initial setups
+            for(x = 0; x<ranges.length; x++){
+                card_prices.push([]);
+                range_nc = range_row.insertCell();
+                range_nc.innerText = `${ranges[x][0]}-${ranges[x][1]}`;
+            }
+
+            for(x = 0; x<percents.length;x++){
+
+                p_credit_nc = perc_credit_row.insertCell();
+                p_cash_nc = perc_cash_row.insertCell();
+
+                i_unmod_nc = indv_unmodified_row.insertCell();
+                i_credit_nc = indv_credit_row.insertCell();
+                i_cash_nc = indv_cash_row.insertCell();
+
+                p_credit_nc.innerText = percents[x][0];
+                p_cash_nc.innerText = percents[x][1];
+
+                i_unmod_nc.innerText = 0;
+                i_credit_nc.innerText = 0;
+                i_cash_nc.innerText = 0;
+            }
+
+            //the do-all function
+            getPriceBtn.addEventListener("click",update_table);
+            priceInputField.addEventListener("keydown", ev=>{
+
+                if(ev.keyCode === 13){update_table()}
+            });
+
+
+        </script>
+
+    </body>
+
+</html>
