@@ -2,7 +2,7 @@
   "dependencies": {
     "@picocss/pico": "^2.1.1",
     "body-parser": "^2.2.2",
-    "csv-parser": "^3.2.1",
+    "csv-parse": "^6.2.1",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "node": "^26.3.0",

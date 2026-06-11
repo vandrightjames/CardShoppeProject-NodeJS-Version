@@ -4,15 +4,12 @@ const fetch = require("node-fetch");
 const ejs = require('ejs');
 const express = require('express');
 const bodyParser = require('body-parser');
-const csv = require("csv-parser");
-const tcg_grabber = require("./tcgcsv_grabber");
-
+const csv = require("csv-parse/sync");
+const { tmpdir } = require("os");
 const app = express();
 const port = 3000;
 
 const ua = "GameShoppeUpdater/0.0.1";
-
-tcg_grabber.user_agent = ua;
 
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
@@ -33,21 +30,32 @@ app.get('/calculator', (req,res)=>{
 
 //When user enters, load the game list
 //then they will select a game -> load sets -> select set -> load sealed products -> select sealed to be watched.
-app.get('/PriceChecker',async (req,res)=>{
+app.get('/PriceChecker', async (req,res)=>{
 
+    let game_list_csv = path.join(__dirname, 'game_list.csv');
     let game_list = [];
 
-    stream = fs.createReadStream(path.join(__dirname, 'game_list.csv'));
-    stream.on('error',(err)=>{
-        game_list = tcg_grabber.saveGameData();
-    })
-    .pipe(csv())
-    .on('data', (data)=>{
-        console.log(data);
-        game_list.push(data);
-    })
-    .on('end',()=>res.render('priceChecker.ejs', {title:"Price Checker", links:access_points, games:game_list}));
-    
+    if(fs.existsSync(game_list_csv)){
+        file_data = fs.readFileSync(game_list_csv);
+        records = csv.parse(file_data, {columns:true});
+    }
+    else{
+        csv_writer = fs.createWriteStream('game_list.csv');
+        csv_writer.on("open",()=>{
+            fetch("https://tcgcsv.com/tcgplayer/categories",{headers:{"User-Agent":ua}})
+            .then(res => res.json())
+            .then(json =>{
+                csv_writer.write("id,name\n");
+                for(let g = 0;g <json["results"].length;g++){
+                    game_list.push({id:json["results"][g]["categoryId"], name:json["results"][g]["name"]});
+                    csv_writer.write(`${json["results"][g]["categoryId"]},${json["results"][g]["name"]}\n`);
+                }
+            });
+        });
+    }
+    console.log('done')
+    res.render('priceChecker.ejs', {title:"Price Checker", links:access_points, games:game_list}); 
+    //console.log('leaving to render,', game_list);
 });
 
 app.get('/PriceChecker/Sets', (req,res)=>{
