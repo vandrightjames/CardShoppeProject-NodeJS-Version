@@ -16,9 +16,10 @@
     </datalist>
 
     <input id="set_choice" type="text" list="sets" placeholder="Set (Id)" />
-    <datalist id="sets">
-        
-    </datalist>
+    <datalist id="sets"></datalist>
+
+    <input id="product_choice" type="text" list="products" placeholder="Product (Id)"/>
+    <datalist id="products"></datalist>
 
 
     <button type="button" id="submit_btn">Add to Watchlist</button>  
@@ -27,19 +28,31 @@
 <%- include('foot.ejs') %>
 
 <script>
-    game_c = document.getElementById("game_choice");
+    let game_c = document.getElementById("game_choice");
+    let set_c = document.getElementById("set_choice");
+    let set_list = document.getElementById("sets");
+
     game_c.addEventListener("input", async function(event){
         try{
             let chosen_option = document.querySelector(`option[value=${game_c.value}]`);
-            const response = fetch(`PriceChecker/Game/${chosen_option.dataset.id}/Set?${Date.now()}`)
+            const response = await fetch(`PriceChecker/Game/${chosen_option.dataset.id}/Set?${Date.now()}`)
             if(!response.ok){
                 throw new Error(`Response Status: ${response.status}`);
             }
+            else{
+                console.log("success");
+            }
             
+            set_list.innerHTML = await response.text();
+
         }
         catch(err){
             console.log(err);
         }
+    });
+
+    set_c.addEventListener("input", async function(event){
+
     });
 
 </script>

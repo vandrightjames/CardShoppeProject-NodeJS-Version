@@ -62,7 +62,7 @@ app.get('/PriceChecker', async (req,res)=>{
 
 //this data changes often enough to not warrant saving a copy, unlike the games list.
 app.get('/PriceChecker/Game/:categoryId/Set', (req,res)=>{
-    let set_list = [];
+    let set_list = "";
 
     let category_id = Number(req.params.categoryId);
 
@@ -74,10 +74,12 @@ app.get('/PriceChecker/Game/:categoryId/Set', (req,res)=>{
         .then(res => res.json())
         .then(json =>{
             for(let g = 0;g <json["results"].length;g++){
-                    set_list.push({id:json["results"][g]["groupId"], name:json["results"][g]["name"], abbr:json["results"][g]["abbreviation"]});
+                set_list += `<option data-setId="${json["results"][g]["groupId"]}" value="${json["results"][g]["name"]}"> ${json["results"][g]["name"]} (${json["results"][g]["abbreviation"]})`
             }
         })
-        .finally(()=>{console.log(set_list.length);res.send(set_list)});
+        .finally(()=>{
+            res.send(set_list)
+        });
     }
     else{
         res.send('Could not find a game category with that ID!');
