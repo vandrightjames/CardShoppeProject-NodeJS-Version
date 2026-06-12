@@ -17,6 +17,7 @@ app.use(express.static('styles'));
 
 app.set('view engine', 'ejs');
 
+
 access_points = [{page:"index",name:"Index"}, {page:"calculator",name:"Calculator"}, {page:"PriceChecker", name:"Price Checker"}];
 
 
@@ -37,7 +38,8 @@ app.get('/PriceChecker', async (req,res)=>{
 
     if(fs.existsSync(game_list_csv)){
         file_data = fs.readFileSync(game_list_csv);
-        records = csv.parse(file_data, {columns:true});
+        game_list = csv.parse(file_data, {columns:true});
+        console.log(game_list)
     }
     else{
         csv_writer = fs.createWriteStream('game_list.csv');
@@ -54,12 +56,27 @@ app.get('/PriceChecker', async (req,res)=>{
         });
     }
     console.log('done')
-    res.render('priceChecker.ejs', {title:"Price Checker", links:access_points, games:game_list}); 
-    //console.log('leaving to render,', game_list);
+    res.render('priceChecker.ejs', {title:"Price Checker", links:access_points, games:game_list});
 });
 
-app.get('/PriceChecker/Sets', (req,res)=>{
-    res.send('');
+//this data changes often enough to not warrant saving a copy, unlike the games list.
+app.get('/PriceChecker/Sets/:setId', (req,res)=>{
+    let set_list = [];
+
+    let file_data = fs.readFileSync(game_list_csv);
+    let game_list = csv.parse(file_data, {columns:true});
+
+    if(game_list.find(req.params.setId) !== undefined){
+        fetch(`https://tcgcsv.com/tcgplayer/${req.params.setId}/groups`,{headers:{"User-Agent":ua}})
+        .then(res => res.json())
+        .then(json =>{
+            
+        });
+        res.send('ok');
+    }
+    else{
+        res.send('Could not find a game category with that ID!');
+    }
 });
 
 app.post('/EditWatchList',(req,res)=>{

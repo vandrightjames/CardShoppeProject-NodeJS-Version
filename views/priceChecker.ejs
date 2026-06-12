@@ -8,10 +8,10 @@
 
 <form id="add_to_watchlist">
 
-    <input id="game_choice" type="text" list="games" placeholder="Game (Id)" />
+    <input id="game_choice" type="text" list="games" value="" placeholder="Game (Id)" />
     <datalist id="games">
         <% for(let i = 0; i < games.length;i++){%>
-            <option value="<%=games[i].id%>"><%=games[i].name%> (<%=games[i].id%>)</option>
+            <option data-id="<%=games[i].id%>" value="<%=games[i].name%>"><%=games[i].name%> (<%=games[i].id%>)</option>
         <% } %>
     </datalist>
 
@@ -27,10 +27,20 @@
 <%- include('foot.ejs') %>
 
 <script>
-   game_c = document.getElementById("game_choice");
-   game_c.addEventListener("change", function(event){
-
-   });
+    game_c = document.getElementById("game_choice");
+    game_c.addEventListener("input", async function(event){
+        try{
+            let chosen_option = document.querySelector(`option[value=${game_c.value}]`);
+            const response = fetch(`PriceChecker/Sets/${chosen_option.dataset.id}`)
+            if(!response.ok){
+                throw new Error(`Response Status: ${response.status}`);
+            }
+            
+        }
+        catch(err){
+            console.log(err);
+        }
+    });
 
 </script>
 
