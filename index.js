@@ -119,23 +119,13 @@ app.get('/PriceChecker/Game/:categoryId/Set/:groupId/Product', (req,res)=>{
     }
 });
 
-app.post('/EditWatchList',(req,res)=>{
+app.post('/PriceChecker/Watchlist/Add',(req,res)=>{
+    if(req.body.categoryId != undefined && req.body.groupId != undefined && req.body.productId != undefined){
+        
+    }
     res.send('');
 });
 
-app.post('/PriceData',(req,res)=>{
-    console.log(req.body);
-    
-    for(var key in req.body){
-        setTimeout(function(){
-            productId = req.body[key];
-            http.get("http://tcgcsv.com/tcgplayer/1/541084/")
-        }, 1000);
-    }
-
-    res.send("yippee");
-});
-
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`CardShoppeApp listening on port ${port}`)
 })

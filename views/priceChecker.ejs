@@ -38,6 +38,7 @@
     let game_c = document.getElementById("game_choice");
     let set_c = document.getElementById("set_choice");
     let product_c = document.getElementById("product_choice");
+    let submit_btn = document.getElementById("submit_btn");
 
     let set_list = document.getElementById("sets");
     let product_list = document.getElementById("products");
@@ -88,6 +89,36 @@
         document.getElementById("product_link").href = chosen_product.dataset.url;
         document.getElementById("product_link").innerText = chosen_product.value;
     });  
+
+    submit_btn.addEventListener("click", async function(event){
+        let chosen_game = document.querySelector(`option[value="${game_c.value}"]`);
+        let chosen_set = document.querySelector(`option[value="${set_c.value}"]`);
+        let chosen_product = document.querySelector(`option[value="${product_c.value}"]`);
+
+        try{
+            const response = await fetch(`PriceChecker/Watchlist/Add?{Date.now()}`, {
+                "method":"POST",
+                "headers":{
+                    "content-type":"application/x-www-form-urlencoded"
+                },
+                "body": new URLSearchParams({categoryId:chosen_game.dataset.id, groupId:chosen_set.dataset.setId, productId:chosen_product.dataset.productId})
+            })
+            
+            if(!response.ok){
+                throw new Error(`Response Status: ${response.status}`);
+            }
+            else{
+                console.log("success");
+            }
+            
+            product_list.innerHTML = await response.text();
+
+        }
+        catch(err){
+            console.log(err);
+        }
+
+    });
 
 </script>
 
