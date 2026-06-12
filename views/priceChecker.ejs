@@ -31,7 +31,7 @@
     game_c.addEventListener("input", async function(event){
         try{
             let chosen_option = document.querySelector(`option[value=${game_c.value}]`);
-            const response = fetch(`PriceChecker/Sets/${chosen_option.dataset.id}`)
+            const response = fetch(`PriceChecker/Game/${chosen_option.dataset.id}/Set?${Date.now()}`)
             if(!response.ok){
                 throw new Error(`Response Status: ${response.status}`);
             }

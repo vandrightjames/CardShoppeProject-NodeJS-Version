@@ -11,6 +11,8 @@ const port = 3000;
 
 const ua = "GameShoppeUpdater/0.0.1";
 
+const game_list_csv = path.join(__dirname, 'game_list.csv');
+
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
 app.use(express.static('styles'));
@@ -33,7 +35,6 @@ app.get('/calculator', (req,res)=>{
 //then they will select a game -> load sets -> select set -> load sealed products -> select sealed to be watched.
 app.get('/PriceChecker', async (req,res)=>{
 
-    let game_list_csv = path.join(__dirname, 'game_list.csv');
     let game_list = [];
 
     if(fs.existsSync(game_list_csv)){
@@ -60,19 +61,23 @@ app.get('/PriceChecker', async (req,res)=>{
 });
 
 //this data changes often enough to not warrant saving a copy, unlike the games list.
-app.get('/PriceChecker/Sets/:setId', (req,res)=>{
+app.get('/PriceChecker/Game/:categoryId/Set', (req,res)=>{
     let set_list = [];
 
-    let file_data = fs.readFileSync(game_list_csv);
-    let game_list = csv.parse(file_data, {columns:true});
+    let category_id = Number(req.params.categoryId);
 
-    if(game_list.find(req.params.setId) !== undefined){
-        fetch(`https://tcgcsv.com/tcgplayer/${req.params.setId}/groups`,{headers:{"User-Agent":ua}})
+    let file_data = fs.readFileSync(game_list_csv);
+    let game_list = csv.parse(file_data, {columns:true});//verifcation that the id given goes somewhere.
+
+    if(game_list.find((e)=>e.id == category_id) !== undefined){
+        fetch(`https://tcgcsv.com/tcgplayer/${req.params.categoryId}/groups`,{headers:{"User-Agent":ua}})
         .then(res => res.json())
         .then(json =>{
-            
-        });
-        res.send('ok');
+            for(let g = 0;g <json["results"].length;g++){
+                    set_list.push({id:json["results"][g]["groupId"], name:json["results"][g]["name"], abbr:json["results"][g]["abbreviation"]});
+            }
+        })
+        .finally(()=>{console.log(set_list.length);res.send(set_list)});
     }
     else{
         res.send('Could not find a game category with that ID!');
