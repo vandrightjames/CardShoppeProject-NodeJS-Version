@@ -21,20 +21,30 @@
     <input id="product_choice" type="text" list="products" placeholder="Product (Id)"/>
     <datalist id="products"></datalist>
 
-
     <button type="button" id="submit_btn">Add to Watchlist</button>  
 
 </form>
+
+<div id="product_info_box">
+
+    <img id="product_img" src="">
+    <a id="product_link" href=""></a>
+
+</div>
+
 <%- include('foot.ejs') %>
 
 <script>
     let game_c = document.getElementById("game_choice");
     let set_c = document.getElementById("set_choice");
+    let product_c = document.getElementById("product_choice");
+
     let set_list = document.getElementById("sets");
+    let product_list = document.getElementById("products");
 
     game_c.addEventListener("input", async function(event){
         try{
-            let chosen_option = document.querySelector(`option[value=${game_c.value}]`);
+            let chosen_option = document.querySelector(`option[value="${game_c.value}"]`);
             const response = await fetch(`PriceChecker/Game/${chosen_option.dataset.id}/Set?${Date.now()}`)
             if(!response.ok){
                 throw new Error(`Response Status: ${response.status}`);
@@ -52,8 +62,32 @@
     });
 
     set_c.addEventListener("input", async function(event){
+        try{
 
+            let chosen_game = document.querySelector(`option[value="${game_c.value}"]`);
+            let chosen_set = document.querySelector(`option[value="${set_c.value}"]`);
+            const response = await fetch(`PriceChecker/Game/${chosen_game.dataset.id}/Set/${chosen_set.dataset.setid}/Product?${Date.now()}`)
+            if(!response.ok){
+                throw new Error(`Response Status: ${response.status}`);
+            }
+            else{
+                console.log("success");
+            }
+            
+            product_list.innerHTML = await response.text();
+
+        }
+        catch(err){
+            console.log(err);
+        }
     });
+
+    product_c.addEventListener("input", function(event){
+        let chosen_product = document.querySelector(`option[value="${product_c.value}"]`);
+        document.getElementById("product_img").src = chosen_product.dataset.img;
+        document.getElementById("product_link").href = chosen_product.dataset.url;
+        document.getElementById("product_link").innerText = chosen_product.value;
+    });  
 
 </script>
 

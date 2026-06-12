@@ -40,7 +40,6 @@ app.get('/PriceChecker', async (req,res)=>{
     if(fs.existsSync(game_list_csv)){
         file_data = fs.readFileSync(game_list_csv);
         game_list = csv.parse(file_data, {columns:true});
-        console.log(game_list)
     }
     else{
         csv_writer = fs.createWriteStream('game_list.csv');
@@ -56,7 +55,6 @@ app.get('/PriceChecker', async (req,res)=>{
             });
         });
     }
-    console.log('done')
     res.render('priceChecker.ejs', {title:"Price Checker", links:access_points, games:game_list});
 });
 
@@ -70,16 +68,51 @@ app.get('/PriceChecker/Game/:categoryId/Set', (req,res)=>{
     let game_list = csv.parse(file_data, {columns:true});//verifcation that the id given goes somewhere.
 
     if(game_list.find((e)=>e.id == category_id) !== undefined){
-        fetch(`https://tcgcsv.com/tcgplayer/${req.params.categoryId}/groups`,{headers:{"User-Agent":ua}})
+        fetch(`https://tcgcsv.com/tcgplayer/${category_id}/groups`,{headers:{"User-Agent":ua}})
         .then(res => res.json())
         .then(json =>{
             for(let g = 0;g <json["results"].length;g++){
                 set_list += `<option data-setId="${json["results"][g]["groupId"]}" value="${json["results"][g]["name"]}"> ${json["results"][g]["name"]} (${json["results"][g]["abbreviation"]})`
             }
         })
+        .catch((err)=>{
+            res.send(`Someting went wrong: ${err}`)
+        })
         .finally(()=>{
             res.send(set_list)
         });
+    }
+    else{
+        res.send('Could not find a game category with that ID!');
+    }
+});
+
+app.get('/PriceChecker/Game/:categoryId/Set/:groupId/Product', (req,res)=>{
+    let product_list = "";
+
+    let category_id = Number(req.params.categoryId);
+    let group_id = Number(req.params.groupId);
+
+    let file_data = fs.readFileSync(game_list_csv);
+    let game_list = csv.parse(file_data, {columns:true});//verifcation that the id given goes somewhere.
+
+    if(game_list.find((e)=>e.id == category_id) !== undefined){
+  
+        fetch(`https://tcgcsv.com/tcgplayer/${category_id}/${group_id}/products`,{headers:{"User-Agent":ua}})
+        .then(res => res.json())
+        .then(json =>{
+            for(let g = 0;g <json["results"].length;g++){
+                jrg = json["results"][g]
+                product_list += `<option data-url="${jrg["url"]}" data-img="${jrg["imageUrl"]}" data-productId="${Number(jrg["productId"])}" value="${jrg["name"]}"> ${jrg["name"]} (${jrg["productId"]})`
+            }
+        })
+        .catch((err)=>{
+            res.send(`Someting went wrong: ${err}`)
+        })
+        .finally(()=>{
+            res.send(product_list);
+        });
+
     }
     else{
         res.send('Could not find a game category with that ID!');
